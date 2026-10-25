@@ -20,5 +20,12 @@ mkShell {
     in
     ''
       export PATH=$PATH:${androidComposition.androidsdk}/libexec/android-sdk/build-tools/${buildToolsVersion}
+      export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${
+        lib.makeLibraryPath [
+          vips
+          libogg
+          libvorbis
+        ]
+      }
     '';
 }
