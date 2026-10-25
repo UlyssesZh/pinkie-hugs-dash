@@ -1,0 +1,24 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    rexml (3.4.4)
+    rubyzip (3.7.0)
+    tqdm (0.4.1)
+
+PLATFORMS
+  ruby
+  x86_64-linux
+
+DEPENDENCIES
+  rexml
+  rubyzip
+  tqdm
+
+CHECKSUMS
+  bundler (4.1.0.beta2) sha256=ffd80c244e3c080cbc403b194e7b386668c69275561f81b7a801f08772a6e2d6
+  rexml (3.4.4) sha256=19e0a2c3425dfbf2d4fc1189747bdb2f849b6c5e74180401b15734bc97b5d142
+  rubyzip (3.7.0) sha256=65c19294da75297a939006f3516deacc33185fbd721ff1954f7a231db6d3e121
+  tqdm (0.4.1) sha256=cad4527eb660489f84e3c838fccbe0d4ab2e91527adf9df9a68b9e839ef58b5b
+
+BUNDLED WITH
+  4.1.0.beta2
