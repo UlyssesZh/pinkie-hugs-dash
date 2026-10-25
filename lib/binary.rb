@@ -1,5 +1,3 @@
-require 'json'
-
 module Binary
 	module Reader
 		def u8

@@ -63,6 +63,12 @@ module Utils
 		OpenSSL::PKey::RSA.new(private_key).public_key.to_pem
 	end
 
+	def opts &block
+		opts = {}
+		OptionParser.new(&block).parse! into: opts
+		opts.transform_keys! { _1.to_s.tr(?-, ?_).to_sym }
+	end
+
 	module TimeReproducible
 		Zip::DOSTime.singleton_class.prepend self
 		def now

@@ -5,6 +5,7 @@ require 'optparse'
 require 'rexml/document'
 require 'tqdm'
 require 'openssl'
+require 'json'
 require 'zip'
 
 require_relative 'lib/utils'
@@ -133,14 +134,30 @@ def pack songs:, apk:, obb:, out_apk:, out_obb:, private_key:, ks: nil, ks_pass:
 	puts "signed #{out_apk}"
 end
 
+def lobby song:, blur_scale: 0.25, blur_radius: 1.65, preview_start: 30, preview_duration: 20, preview_fadeout: 2, no_blur: false, no_preview: false
+	dir = File.expand_path song
+	unless no_blur
+		cover = File.join dir, 'cover.png'
+		out = File.join dir, 'cover_blur.png'
+		Vips::Image.new_from_file(cover).resize(blur_scale).gaussblur(blur_radius).write_to_file out
+		puts "generated #{out}"
+	end
+	unless no_preview
+		music = File.join dir, 'music_0.ogg'
+		audio = Wavify::Audio.read music
+		preview = audio.crop start: preview_start, duration: preview_duration
+		out = File.join dir, 'preview.ogg'
+		preview.fade_out(preview_fadeout).write out
+		puts "generated #{out}"
+	end
+end
+
 Zip.warn_invalid_date = false
 Zip.write_zip64_support = false # ZIP64 not supported by zipalign
 
-cmd = ARGV.shift
-opts = {}
-case cmd
+case ARGV.shift
 when 'extract'
-	OptionParser.new do |o|
+	opts = Utils.opts do |o|
 		o.on '-h', '--help' do
 			puts o
 			exit
@@ -148,11 +165,11 @@ when 'extract'
 		o.on '--apk PATH'
 		o.on '--obb PATH'
 		o.on '--songs PATH'
-	end.parse! into: opts
+	end
 	extract **opts
 
 when 'pack'
-	OptionParser.new do |o|
+	opts = Utils.opts do |o|
 		o.on '-h', '--help' do
 			puts o
 			exit
@@ -167,8 +184,8 @@ when 'pack'
 		o.on '--ks-pass PASS'
 		o.on '--key-pass PASS'
 		o.on '--ks-key-alias NAME'
-		o.on '--seed N'
-	end.parse! into: opts
+		o.on '--seed N', Integer
+	end
 	require 'mkmf' if opts[:ks]
 	if opts[:seed]
 		require 'random/formatter'
@@ -178,19 +195,38 @@ when 'pack'
 		require 'securerandom'
 		RANDOM = SecureRandom
 	end
-	pack **opts.transform_keys { _1.to_s.tr(?-, ?_).to_sym }
+	pack **opts
 
 when 'keygen'
-	OptionParser.new do |o|
+	opts = Utils.opts do |o|
 		o.on '-h', '--help' do
 			puts o
 			exit
 		end
 		o.on '--private-key PATH'
 		o.on '--public-key PATH'
-	end.parse! into: opts
-	keygen **opts.transform_keys { _1.to_s.tr(?-, ?_).to_sym }
+	end
+	keygen **opts
+
+when 'lobby'
+	opts = Utils.opts do |o|
+		o.on '-h', '--help' do
+			puts o
+			exit
+		end
+		o.on '--song PATH'
+		o.on '--blur-scale FACTOR', Float
+		o.on '--blur-radius RADIUS', Float
+		o.on '--preview-start SECONDS', Float
+		o.on '--preview-duration SECONDS', Float
+		o.on '--preview-fadeout SECONDS', Float
+		o.on '--no-blur'
+		o.on '--no-preview'
+	end
+	require 'vips' unless opts[:no_blur]
+	require 'wavify' unless opts[:no_preview]
+	lobby **opts
 
 else
-	abort "usage: #{__FILE__} extract|pack|keygen ..."
+	abort "usage: #{__FILE__} extract|pack|keygen|lobby ..."
 end
